@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@features/auth';
+import { axiosInstance } from '@/shared/lib/axiosConfig';
+import { API_ENDPOINTS } from '@/shared/config/api';
 
 export interface CallState {
   isCallActive: boolean;
@@ -15,6 +17,7 @@ export interface CallState {
   remoteStream: MediaStream | null;
   peerConnection: RTCPeerConnection | null;
   pendingCandidates: RTCIceCandidateInit[];
+  iceServers: RTCIceServer[];
 
   setCallActive: (active: boolean) => void;
   setIncomingCall: (
@@ -27,6 +30,7 @@ export interface CallState {
   setSelectedUser: (user: User | null) => void;
   setCallMode: (mode: 'video' | 'audio') => void;
 
+  fetchIceServers: () => Promise<void>;
   initializeMedia: (mode?: 'video' | 'audio') => Promise<MediaStream | null>;
   createPeerConnection: (targetUserId: string | number) => RTCPeerConnection;
   applyPendingCandidates: () => Promise<void>;
@@ -50,6 +54,7 @@ export const useCallStore = create<CallState>((set, get) => ({
   remoteStream: null,
   peerConnection: null,
   pendingCandidates: [],
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 
   setCallActive: (active) => set({ isCallActive: active }),
 
@@ -65,12 +70,28 @@ export const useCallStore = create<CallState>((set, get) => ({
   setSelectedUser: (user) => set({ selectedUser: user }),
   setCallMode: (mode) => set({ callMode: mode }),
 
+  fetchIceServers: async () => {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.VOIP.ICE_SERVERS);
+      const data = response.data;
+
+      if (data.iceServers) {
+        set({ iceServers: data.iceServers });
+      }
+    } catch (error) {
+      console.error('Не удалось получить ICE серверы:', error);
+    }
+  },
+
   initializeMedia: async (mode = 'video') => {
     try {
+      await get().fetchIceServers();
+
       const constraints: MediaStreamConstraints =
         mode === 'audio' ? { audio: true, video: false } : { audio: true, video: true };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
       set({ localStream: stream });
       return stream;
     } catch (error) {
@@ -86,7 +107,7 @@ export const useCallStore = create<CallState>((set, get) => ({
     }
 
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: get().iceServers,
     });
 
     const { localStream } = get();

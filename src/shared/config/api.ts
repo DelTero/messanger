@@ -18,4 +18,9 @@ export const API_ENDPOINTS = {
   USERS: {
     GET_ALL: '/users',
   },
+
+  // VoIP
+  VOIP: {
+    ICE_SERVERS: '/voip/ice-servers',
+  },
 } as const;
