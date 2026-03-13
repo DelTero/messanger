@@ -2,7 +2,7 @@ import { getSocketInstance } from '@shared/lib/socket';
 
 let hasEmittedUserOnline = false;
 
-export function emitUserOnline(userId: number) {
+export function emitUserOnline(userId: string) {
   const socket = getSocketInstance();
 
   if (socket.connected && !hasEmittedUserOnline && userId) {
