@@ -1,5 +1,6 @@
 import { cn } from '@/shared/lib/utils';
 import React, { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Spinner } from '../Spinner';
 
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Иконка (компонент) */
@@ -19,6 +20,12 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 
   /** Круглая форма */
   round?: boolean;
+
+  /** Заблокированное состояние */
+  disabled?: boolean;
+
+  /** Загрузка состояния */
+  isLoading?: boolean;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -28,6 +35,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
   size = 'md',
   variant = 'ghost',
   round = true,
+  disabled,
+  isLoading,
   ...props
 }) => {
   const sizeClasses = {
@@ -68,9 +77,17 @@ export const IconButton: React.FC<IconButtonProps> = ({
     <button
       className={buttonClasses}
       type="button"
+      disabled={disabled || isLoading}
       {...props}
     >
-      <Icon className={iconSizeClasses[size]} />
+      {isLoading ? (
+        <Spinner
+          size={3}
+          className="text-white"
+        />
+      ) : (
+        <Icon className={iconSizeClasses[size]} />
+      )}
       {children}
     </button>
   );

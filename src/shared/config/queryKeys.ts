@@ -5,4 +5,7 @@ export const QUERY_KEYS = {
     APPROACHES: 'approaches',
     APPROACHES_BY_EXERCISE_ID: (exerciseId?: string) => (exerciseId ? ['approaches', exerciseId] : ['approaches']),
   },
+  NOTIFICATIONS: {
+    ALL: ['notifications'],
+  },
 };

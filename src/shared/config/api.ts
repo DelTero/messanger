@@ -23,4 +23,12 @@ export const API_ENDPOINTS = {
   VOIP: {
     ICE_SERVERS: '/voip/ice-servers',
   },
+
+  // Уведомления
+  NOTIFICATIONS: {
+    GET_ALL: '/notifications',
+    STREAM: '/notifications/stream',
+    MARK_AS_READ: (id: string) => `/notifications/${id}/read`,
+    MARK_ALL_AS_READ: '/notifications/read-all',
+  },
 } as const;
