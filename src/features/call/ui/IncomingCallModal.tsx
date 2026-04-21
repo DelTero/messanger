@@ -31,7 +31,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
         return;
       }
 
-      const pc = createPeerConnection(callerId);
+      const pc = createPeerConnection(callerId, socket);
 
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer));
 

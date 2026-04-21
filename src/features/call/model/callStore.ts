@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Socket } from 'socket.io-client';
 import { User } from '@features/auth';
 import { axiosInstance } from '@/shared/lib/axiosConfig';
 import { API_ENDPOINTS } from '@/shared/config/api';
@@ -32,7 +33,7 @@ export interface CallState {
 
   fetchIceServers: () => Promise<void>;
   initializeMedia: (mode?: 'video' | 'audio') => Promise<MediaStream | null>;
-  createPeerConnection: (targetUserId: string | number) => RTCPeerConnection;
+  createPeerConnection: (targetUserId: string | number, socket: Socket) => RTCPeerConnection;
   applyPendingCandidates: () => Promise<void>;
   addIceCandidate: (candidate: RTCIceCandidateInit) => void;
   cleanupResources: () => void;
@@ -76,7 +77,20 @@ export const useCallStore = create<CallState>((set, get) => ({
       const data = response.data;
 
       if (data.iceServers) {
-        set({ iceServers: data.iceServers });
+        const filtered: RTCIceServer[] = data.iceServers
+          .map((server: RTCIceServer) => {
+            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+            return {
+              ...server,
+              urls: urls.filter((url: string) => !/:53(\?|$)/.test(url)),
+            };
+          })
+          .filter((server: RTCIceServer) => {
+            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+            return urls.length > 0;
+          });
+
+        set({ iceServers: filtered });
       }
     } catch (error) {
       console.error('Не удалось получить ICE серверы:', error);
@@ -100,7 +114,7 @@ export const useCallStore = create<CallState>((set, get) => ({
     }
   },
 
-  createPeerConnection: () => {
+  createPeerConnection: (targetUserId, socket) => {
     const currentPeerConnection = get().peerConnection;
     if (currentPeerConnection) {
       currentPeerConnection.close();
@@ -116,6 +130,19 @@ export const useCallStore = create<CallState>((set, get) => ({
         pc.addTrack(track, localStream);
       });
     }
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit('ice-candidate', {
+          candidate: event.candidate,
+          to: targetUserId,
+        });
+      }
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log('ICE gathering state:', pc.iceGatheringState);
+    };
 
     pc.ontrack = (event) => {
       if (event.streams && event.streams[0]) {

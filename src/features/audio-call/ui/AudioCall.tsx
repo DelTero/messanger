@@ -26,16 +26,7 @@ export const AudioCall = ({ selectedUser }: AudioCallProps) => {
         return;
       }
 
-      const pc = createPeerConnection(selectedUser.id);
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('ice-candidate', {
-            candidate: event.candidate,
-            to: selectedUser.id,
-          });
-        }
-      };
+      const pc = createPeerConnection(selectedUser.id, socket);
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
