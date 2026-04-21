@@ -10,10 +10,6 @@ export const Signup = lazy(() => import('@pages/signup').then((module) => ({ def
 
 export const NotFound = lazy(() => import('@pages/not-found').then((module) => ({ default: module.NotFound })));
 
-export const Fitness = lazy(() => import('@pages/fitness').then((module) => ({ default: module.Fitness })));
-
-export const TestPage = lazy(() => import('@pages/3d-test-page').then((module) => ({ default: module.TestPage })));
-
 // Компоненты лейаутов
 export const MainLayout = lazy(() => import('@widgets/layouts').then((module) => ({ default: module.MainLayout })));
 

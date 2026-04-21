@@ -15,11 +15,7 @@ export const Header = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Chat', to: ROUTES.CHAT },
-    { name: 'Fitness', to: ROUTES.FITNESS },
-    { name: 'Test', to: ROUTES.TEST_PAGE },
-  ];
+  const navigation = [{ name: 'Chat', to: ROUTES.CHAT }];
 
   const getNavItemClasses = (path: string) => {
     const isActive = location.pathname === path;

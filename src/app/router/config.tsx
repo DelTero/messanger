@@ -2,7 +2,7 @@ import { LoadingFallback } from '@shared/ui/LoadingFallback';
 import { LoadingIndicator } from '@shared/ui/LoadingIndicator';
 import { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router';
-import { Chat, Login, Signup, MainLayout, AuthLayout, NotFound, Fitness, TestPage } from './lazyComponents';
+import { Chat, Login, Signup, MainLayout, AuthLayout, NotFound } from './lazyComponents';
 import { authCheck } from '@features/auth';
 import { ROUTES } from '@shared/config/routes';
 import { RouterErrorBoundary } from '@shared/ui/ErrorBoundary';
@@ -32,14 +32,6 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.CHAT,
         element: withSuspense(Chat),
-      },
-      {
-        path: ROUTES.FITNESS,
-        element: withSuspense(Fitness),
-      },
-      {
-        path: ROUTES.TEST_PAGE,
-        element: withSuspense(TestPage),
       },
     ],
   },

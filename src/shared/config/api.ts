@@ -7,13 +7,6 @@ export const API_ENDPOINTS = {
     CHECK_AUTH: '/auth/check-auth',
   },
 
-  // Фитнес
-  FITNESS: {
-    GET_ALL: '/fitness/exercises',
-    CREATE: '/fitness/exercises',
-    APPROACHES: '/fitness/approaches',
-  },
-
   // Пользователи
   USERS: {
     GET_ALL: '/users',
