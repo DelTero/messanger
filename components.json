@@ -17,8 +17,5 @@
     "utils": "@shared/lib/utils",
     "lib": "@shared/lib",
     "hooks": "@shared/hooks"
-  },
-  "registries": {
-    "@acme": "https://acme.com/r/{name}.json"
   }
 }

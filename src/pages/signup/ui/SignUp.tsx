@@ -35,20 +35,20 @@ export function Signup() {
   });
 
   return (
-    <div className="bg-white flex w-96 max-w-96 flex-1 flex-col justify-center px-6 py-12 lg:px-8 border border-gray-200 rounded-lg shadow-md">
+    <div className="flex w-96 max-w-96 flex-1 flex-col justify-center rounded-lg border border-border bg-card px-6 py-12 shadow-md lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
           src={chatImg}
           className="mx-auto h-10 w-auto"
         />
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Создать аккаунт</h2>
+        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-foreground">Создать аккаунт</h2>
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form
           onSubmit={onSubmit}
-          className="space-y-6"
+          className="flex flex-col gap-6"
         >
           <Input
             control={control}
@@ -79,11 +79,11 @@ export function Signup() {
           </Button>
         </form>
 
-        <p className="mt-10 text-center text-sm/6 text-gray-500">
+        <p className="mt-10 text-center text-sm/6 text-muted-foreground">
           Уже есть аккаунт?{' '}
           <Link
             to={ROUTES.ROOT}
-            className="font-semibold text-indigo-600 hover:text-indigo-500"
+            className="font-semibold text-primary hover:text-primary/90"
           >
             Войти
           </Link>

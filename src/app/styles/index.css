@@ -3,10 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
-.scrollbar-gutter-stable {
-  scrollbar-gutter: stable;
+@layer utilities {
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
 }
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
