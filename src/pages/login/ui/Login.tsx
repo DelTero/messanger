@@ -1,11 +1,12 @@
 import { useForm } from 'react-hook-form';
-import { Input } from '@shared/ui/Input';
+import { Input } from '@/shared/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@shared/ui/Button';
+import { Button } from '@shared/ui/button';
 import { Link, useNavigate } from 'react-router';
 import chatImg from '@assets/chat.png';
 import { LoginDTO, loginSchema, useLoginMutation } from '@features/auth';
 import { ROUTES } from '@shared/config/routes';
+import { Spinner } from '@/shared/ui/spinner';
 
 export function Login() {
   const {
@@ -65,9 +66,9 @@ export function Login() {
 
           <Button
             type="submit"
-            fullWidth
-            isLoading={isSubmitting || isPending}
+            className="w-full"
           >
+            {(isSubmitting || isPending) && <Spinner data-icon="inline-start" />}
             Войти
           </Button>
         </form>

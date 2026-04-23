@@ -1,8 +1,9 @@
-import { Button } from '@shared/ui/Button';
+import { Button } from '@shared/ui/button';
 import { Phone } from 'lucide-react';
 import { User, useUserStore } from '@features/auth';
 import { useAuthenticatedSocket } from '@features/socket';
 import { useCallStore } from '@features/call';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@shared/ui/tooltip';
 
 interface AudioCallProps {
   selectedUser?: User;
@@ -10,7 +11,14 @@ interface AudioCallProps {
 
 export const AudioCall = ({ selectedUser }: AudioCallProps) => {
   const user = useUserStore((state) => state.user);
-  const { setCallActive, setSelectedUser, initializeMedia, createPeerConnection, setCallMode } = useCallStore();
+  const {
+    setCallActive,
+    setSelectedUser,
+    initializeMedia,
+    createPeerConnection,
+    setCallMode,
+    setCallConnectionStatus,
+  } = useCallStore();
 
   const socket = useAuthenticatedSocket();
 
@@ -23,6 +31,7 @@ export const AudioCall = ({ selectedUser }: AudioCallProps) => {
       const stream = await initializeMedia('audio');
       if (!stream) {
         console.error('Не удалось получить медиапоток (audio)');
+        setCallConnectionStatus('failed');
         return;
       }
 
@@ -43,16 +52,25 @@ export const AudioCall = ({ selectedUser }: AudioCallProps) => {
       setCallActive(true);
     } catch (error) {
       console.error('Ошибка при инициировании аудиозвонка:', error);
+      setCallConnectionStatus('failed');
     }
   };
 
   return (
-    <Button
-      onClick={initiateCall}
-      disabled={!selectedUser}
-      className="px-6"
-    >
-      <Phone className="h-5 w-5" />
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={initiateCall}
+            disabled={!selectedUser}
+            size="icon"
+            aria-label="Audio call"
+          >
+            <Phone data-icon="inline-start" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Аудиозвонок</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };

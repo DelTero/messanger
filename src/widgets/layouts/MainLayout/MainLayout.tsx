@@ -6,14 +6,12 @@ export function MainLayout() {
   useAuthenticatedSocket();
 
   return (
-    <div className="w-full h-full bg-gray-50 flex flex-col">
+    <div className="flex h-dvh w-full flex-col bg-muted">
       <Header />
 
-      <main className="flex-1 w-full p-5 overflow-auto scrollbar-gutter-stable">
+      <main className="min-h-0 flex-1 w-full overflow-hidden p-5">
         <Outlet />
       </main>
-
-      <footer className="bg-white mt-auto">{/* Footer content */}</footer>
     </div>
   );
 }

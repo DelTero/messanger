@@ -1,12 +1,23 @@
-import { Button } from '@shared/ui/Button';
-import { useCallStore } from '../model/callStore';
-import { useAuthenticatedSocket } from '@features/socket';
 import { useEffect, useRef } from 'react';
-import { Phone } from 'lucide-react';
+import { PhoneOff } from 'lucide-react';
+import { useAuthenticatedSocket } from '@features/socket';
+import { Avatar, AvatarFallback } from '@shared/ui/avatar';
+import { Button } from '@shared/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@shared/ui/dialog';
+import { useCallStore } from '../model/callStore';
 
 export const ActiveCallModal = () => {
   const socket = useAuthenticatedSocket();
-  const { selectedUser, callerId, resetCallState, localStream, remoteStream, callMode } = useCallStore();
+  const {
+    isCallActive,
+    selectedUser,
+    callerId,
+    resetCallState,
+    localStream,
+    remoteStream,
+    callMode,
+    callConnectionStatus,
+  } = useCallStore();
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -44,72 +55,98 @@ export const ActiveCallModal = () => {
     resetCallState();
   };
 
-  if (callMode === 'audio') {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-          <h2 className="text-xl font-bold mb-6">Аудиозвонок с {selectedUser?.name || 'пользователем'}</h2>
+  const callName = selectedUser?.name || 'пользователем';
+  const isConnecting = callConnectionStatus === 'connecting';
+  const isConnected = callConnectionStatus === 'connected';
+  const isFailed = callConnectionStatus === 'failed';
 
-          <audio
-            ref={remoteAudioRef}
-            autoPlay
-            className="hidden"
-          />
+  const statusText = isFailed
+    ? 'Не удалось установить соединение.'
+    : isConnected
+      ? 'Соединение установлено.'
+      : 'Устанавливаем соединение...';
 
-          <div className="flex justify-center mt-4">
-            <Button
-              onClick={endCall}
-              className="bg-red-500 hover:bg-red-600 rounded-full px-3.5 py-3.5"
-            >
-              <Phone className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const callStateText = isFailed ? 'Ошибка соединения' : isConnected ? 'Разговор идет...' : 'Подключаем...';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-4xl">
-        <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-bold">Видеозвонок с {selectedUser?.name || 'пользователем'}</h2>
-        </div>
+    <Dialog
+      open={isCallActive}
+      onOpenChange={(open) => {
+        if (!open) {
+          endCall();
+        }
+      }}
+    >
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>
+            {callMode === 'audio' ? 'Аудиозвонок' : 'Видеозвонок'} с {callName}
+          </DialogTitle>
+          <DialogDescription>{statusText}</DialogDescription>
+        </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="relative w-full aspect-video">
-            <video
-              ref={localVideoRef}
+        {callMode === 'audio' ? (
+          <div className="flex flex-col items-center gap-4 py-6">
+            <Avatar className="size-20">
+              <AvatarFallback>{callName.slice(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="text-center">
+              <p className="font-medium">{callName}</p>
+              <p className="text-sm text-muted-foreground">{callStateText}</p>
+            </div>
+            {isConnecting ? (
+              <div className="flex items-center gap-2">
+                <span className="size-2 animate-pulse rounded-full bg-primary" />
+                <span className="size-2 animate-pulse rounded-full bg-primary [animation-delay:200ms]" />
+                <span className="size-2 animate-pulse rounded-full bg-primary [animation-delay:400ms]" />
+              </div>
+            ) : null}
+            <audio
+              ref={remoteAudioRef}
               autoPlay
-              muted
-              playsInline
-              className="w-full h-64 object-cover bg-gray-200 rounded-lg"
+              className="hidden"
             />
-            <div className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 rounded">Вы</div>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="relative overflow-hidden rounded-md bg-muted">
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="h-56 w-full object-cover md:h-64"
+              />
+              <span className="absolute bottom-2 left-2 rounded bg-background/90 px-2 py-1 text-xs font-medium">
+                Вы
+              </span>
+            </div>
 
-          <div className="relative w-full aspect-video">
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="w-full h-64 object-cover bg-gray-200 rounded-lg"
-            />
-            <div className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 rounded">
-              {selectedUser?.name || 'Собеседник'}
+            <div className="relative overflow-hidden rounded-md bg-muted">
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="h-56 w-full object-cover md:h-64"
+              />
+              <span className="absolute bottom-2 left-2 rounded bg-background/90 px-2 py-1 text-xs font-medium">
+                {selectedUser?.name || 'Собеседник'}
+              </span>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex justify-center space-x-4 mt-4">
+        <div className="mt-2 flex justify-center">
           <Button
             onClick={endCall}
-            className="bg-red-500 hover:bg-red-600 rounded-full px-3.5 py-3.5"
+            size="icon"
+            variant="destructive"
+            aria-label="End call"
           >
-            <Phone className="h-6 w-6" />
+            <PhoneOff />
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

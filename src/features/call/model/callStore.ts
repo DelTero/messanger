@@ -13,6 +13,7 @@ export interface CallState {
   selectedUser: User | null;
 
   callMode: 'video' | 'audio';
+  callConnectionStatus: 'idle' | 'connecting' | 'connected' | 'failed';
 
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
@@ -30,6 +31,7 @@ export interface CallState {
   ) => void;
   setSelectedUser: (user: User | null) => void;
   setCallMode: (mode: 'video' | 'audio') => void;
+  setCallConnectionStatus: (status: 'idle' | 'connecting' | 'connected' | 'failed') => void;
 
   fetchIceServers: () => Promise<void>;
   initializeMedia: (mode?: 'video' | 'audio') => Promise<MediaStream | null>;
@@ -50,6 +52,7 @@ export const useCallStore = create<CallState>((set, get) => ({
   selectedUser: null,
 
   callMode: 'video',
+  callConnectionStatus: 'idle',
 
   localStream: null,
   remoteStream: null,
@@ -57,7 +60,11 @@ export const useCallStore = create<CallState>((set, get) => ({
   pendingCandidates: [],
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 
-  setCallActive: (active) => set({ isCallActive: active }),
+  setCallActive: (active) =>
+    set({
+      isCallActive: active,
+      callConnectionStatus: active ? 'connecting' : 'idle',
+    }),
 
   setIncomingCall: (incoming, callerId = '', callerName = '', offer = null, mode = 'video') =>
     set((state) => ({
@@ -70,6 +77,7 @@ export const useCallStore = create<CallState>((set, get) => ({
 
   setSelectedUser: (user) => set({ selectedUser: user }),
   setCallMode: (mode) => set({ callMode: mode }),
+  setCallConnectionStatus: (status) => set({ callConnectionStatus: status }),
 
   fetchIceServers: async () => {
     try {
@@ -123,6 +131,7 @@ export const useCallStore = create<CallState>((set, get) => ({
     const pc = new RTCPeerConnection({
       iceServers: get().iceServers,
     });
+    set({ callConnectionStatus: 'connecting' });
 
     const { localStream } = get();
     if (localStream) {
@@ -152,10 +161,31 @@ export const useCallStore = create<CallState>((set, get) => ({
 
     pc.oniceconnectionstatechange = () => {
       console.log('ICE состояние изменилось:', pc.iceConnectionState);
+
+      if (pc.iceConnectionState === 'failed') {
+        set({ callConnectionStatus: 'failed' });
+      }
     };
 
     pc.onconnectionstatechange = () => {
       console.log('Состояние соединения изменилось:', pc.connectionState);
+
+      switch (pc.connectionState) {
+        case 'new':
+        case 'connecting':
+          set({ callConnectionStatus: 'connecting' });
+          break;
+        case 'connected':
+          set({ callConnectionStatus: 'connected' });
+          break;
+        case 'disconnected':
+        case 'failed':
+          set({ callConnectionStatus: 'failed' });
+          break;
+        case 'closed':
+          set({ callConnectionStatus: 'idle' });
+          break;
+      }
     };
 
     set({ peerConnection: pc });
@@ -213,6 +243,7 @@ export const useCallStore = create<CallState>((set, get) => ({
       remoteStream: null,
       peerConnection: null,
       pendingCandidates: [],
+      callConnectionStatus: 'idle',
     });
   },
 
@@ -227,6 +258,7 @@ export const useCallStore = create<CallState>((set, get) => ({
       incomingOffer: null,
       selectedUser: null,
       callMode: 'video',
+      callConnectionStatus: 'idle',
     });
   },
 }));

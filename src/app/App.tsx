@@ -2,7 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router/dom';
 import { router } from './router/config';
 import { queryClient } from '@shared/lib/queryClient';
-import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
+import { ErrorBoundary } from '@shared/ui/error-boundary';
 import { GlobalCallHandler } from '@features/call';
 import { Toaster } from '@/shared/ui/sonner';
 

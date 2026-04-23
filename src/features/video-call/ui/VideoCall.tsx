@@ -1,8 +1,9 @@
-import { Button } from '@shared/ui/Button';
+import { Button } from '@shared/ui/button';
 import { Video } from 'lucide-react';
 import { User, useUserStore } from '@features/auth';
 import { useAuthenticatedSocket } from '@features/socket';
 import { useCallStore } from '@features/call';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@shared/ui/tooltip';
 
 interface VideoCallProps {
   selectedUser?: User;
@@ -10,7 +11,14 @@ interface VideoCallProps {
 
 export const VideoCall = ({ selectedUser }: VideoCallProps) => {
   const user = useUserStore((state) => state.user);
-  const { setCallActive, setSelectedUser, initializeMedia, createPeerConnection, setCallMode } = useCallStore();
+  const {
+    setCallActive,
+    setSelectedUser,
+    initializeMedia,
+    createPeerConnection,
+    setCallMode,
+    setCallConnectionStatus,
+  } = useCallStore();
 
   const socket = useAuthenticatedSocket();
 
@@ -23,19 +31,11 @@ export const VideoCall = ({ selectedUser }: VideoCallProps) => {
       const stream = await initializeMedia('video');
       if (!stream) {
         console.error('Не удалось получить медиапоток');
+        setCallConnectionStatus('failed');
         return;
       }
 
-      const pc = createPeerConnection(selectedUser.id);
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('ice-candidate', {
-            candidate: event.candidate,
-            to: selectedUser.id,
-          });
-        }
-      };
+      const pc = createPeerConnection(selectedUser.id, socket);
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -52,16 +52,25 @@ export const VideoCall = ({ selectedUser }: VideoCallProps) => {
       setCallActive(true);
     } catch (error) {
       console.error('Ошибка при инициировании звонка:', error);
+      setCallConnectionStatus('failed');
     }
   };
 
   return (
-    <Button
-      onClick={initiateCall}
-      disabled={!selectedUser}
-      className="px-6"
-    >
-      <Video className="h-5 w-5" />
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={initiateCall}
+            disabled={!selectedUser}
+            size="icon"
+            aria-label="Video call"
+          >
+            <Video data-icon="inline-start" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Видеозвонок</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };

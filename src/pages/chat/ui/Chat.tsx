@@ -1,13 +1,18 @@
-import { Button } from '@shared/ui/Button';
-import { Input } from '@shared/ui/Input';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGetUsers } from '../api/useGetAllUsers';
 import { User, useUserStore } from '@features/auth';
-import { VideoCall } from './VideoCall';
 import { useAuthenticatedSocket } from '@features/socket';
 import { cn } from '@/shared/lib/utils';
-import { MessagesSquare, SendHorizonal } from 'lucide-react';
+import { Menu, MessagesSquare, SendHorizontal } from 'lucide-react';
 import { AudioCall } from '@features/audio-call';
+import { Avatar, AvatarFallback } from '@shared/ui/avatar';
+import { Badge } from '@shared/ui/badge';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { ScrollArea } from '@shared/ui/scroll-area';
+import { Separator } from '@shared/ui/separator';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@shared/ui/sheet';
+import { VideoCall } from '@/features/video-call';
 
 interface Message {
   id: string;
@@ -34,6 +39,8 @@ export const Chat = () => {
   const [messageInput, setMessageInput] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [unreadMessages, setUnreadMessages] = useState<string[]>([]);
+  const [isUsersSheetOpen, setIsUsersSheetOpen] = useState(false);
+  const lastMessageRef = useRef<HTMLDivElement | null>(null);
 
   const currentUser = useUserStore((state) => state.user);
 
@@ -71,7 +78,11 @@ export const Chat = () => {
       socket.off('newMessageNotification', handleNewMessageNotification);
       socket.off('privateChat', handlePrivateChat);
     };
-  }, [socket, selectedUser]);
+  }, [socket, selectedUser, currentUser]);
+
+  useEffect(() => {
+    lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const sendMessage = () => {
     if (!socket || !currentUser || !messageInput.trim() || !selectedUser) return;
@@ -87,6 +98,7 @@ export const Chat = () => {
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
+    setIsUsersSheetOpen(false);
 
     setMessages([]);
 
@@ -104,137 +116,184 @@ export const Chat = () => {
     const isActiveUser = selectedUser?.id === user.id;
     const hasUnreadMessages = unreadMessages.includes(user.id);
 
-    return cn('flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200', {
-      'bg-blue-100 border-l-4 border-blue-500': isActiveUser,
-      'bg-yellow-50 hover:bg-yellow-100': hasUnreadMessages && !isActiveUser,
-      'bg-indigo-50 hover:bg-indigo-100': !hasUnreadMessages && !isActiveUser,
+    return cn('flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors', {
+      'bg-primary/10': isActiveUser,
+      'bg-muted/70': hasUnreadMessages && !isActiveUser,
+      'hover:bg-muted': !hasUnreadMessages && !isActiveUser,
     });
   };
 
-  const getUserNameClasses = (user: User) => {
-    const isActiveUser = selectedUser?.id === user.id;
-    const hasUnreadMessages = unreadMessages.includes(user.id);
+  const getUserName = (user: User) => {
+    const parts = user.name.trim().split(' ');
 
-    return cn('font-medium', {
-      'text-blue-700': isActiveUser,
-      'text-yellow-700 font-semibold': hasUnreadMessages && !isActiveUser,
-      'text-indigo-700': !hasUnreadMessages && !isActiveUser,
-    });
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
   };
 
-  // const getOnlineStatusClasses = (isOnline: boolean) => {
-  //   return cn('w-2 h-2 rounded-full', {
-  //     'bg-green-500': isOnline,
-  //     'bg-red-400': !isOnline,
-  //   });
-  // };
+  const renderUserList = () => (
+    <ScrollArea className="h-full">
+      <div className="flex flex-col gap-1 p-2">
+        {users.map((user) => {
+          const hasUnreadMessages = unreadMessages.includes(user.id);
+
+          return (
+            <button
+              key={user.id}
+              type="button"
+              onClick={() => handleUserSelect(user)}
+              className={getUserItemClasses(user)}
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <Avatar>
+                  <AvatarFallback>{getUserName(user)}</AvatarFallback>
+                </Avatar>
+                <span className="truncate font-medium">{user.name}</span>
+              </div>
+
+              {hasUnreadMessages ? <Badge variant="secondary">Новое</Badge> : null}
+            </button>
+          );
+        })}
+      </div>
+    </ScrollArea>
+  );
 
   const getMessageClasses = (messageUserId: string) => {
-    return cn('mb-4', {
-      'text-right': messageUserId === currentUser?.id,
-      'text-left': messageUserId !== currentUser?.id,
-    });
-  };
+    const isCurrentUser = messageUserId === currentUser?.id;
 
-  const getMessageTextClasses = (messageUserId: string) => {
-    return cn('inline-block p-3 rounded-lg max-w-[70%]', {
-      'bg-blue-500 text-white': messageUserId === currentUser?.id,
-      'bg-gray-100 text-gray-800': messageUserId !== currentUser?.id,
+    return cn('max-w-[85%] rounded-lg px-3 py-2 text-sm sm:max-w-[70%] bg-muted text-foreground', {
+      'ml-auto': isCurrentUser,
+      'mr-auto': !isCurrentUser,
     });
   };
 
   return (
-    <div className="flex-1 max-w-6xl mx-auto w-full">
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="flex h-[600px]">
-          {/* Users Panel */}
-          <div className="w-46 lg:w-64 border-r border-gray-200">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Пользователи</h3>
-              <div className="space-y-2">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => handleUserSelect(user)}
-                    className={getUserItemClasses(user)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {/* <div className={getOnlineStatusClasses(user.isOnline)} /> */}
-                      <span className={getUserNameClasses(user)}>{user.name}</span>
-                    </div>
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl">
+      <div className="flex h-full w-full overflow-hidden rounded-lg border bg-background shadow-sm">
+        <aside className="hidden w-72 border-r md:flex md:flex-col">
+          <div className="px-4 py-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Пользователи</h2>
+          </div>
+          <Separator />
+          {renderUserList()}
+        </aside>
 
-                    {unreadMessages.includes(user.id) && (
-                      <div className="flex items-center">
-                        <span className="text-xs font-semibold text-yellow-600 mr-2">Новое</span>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+        <section className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">Текущий диалог</p>
+              <p className="truncate text-base font-semibold">
+                {selectedUser ? selectedUser.name : 'Пользователь не выбран'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Sheet
+                open={isUsersSheetOpen}
+                onOpenChange={setIsUsersSheetOpen}
+              >
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="md:hidden"
+                    aria-label="Открыть список пользователей"
+                  >
+                    <Menu />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="left"
+                  className="p-0"
+                >
+                  <SheetHeader>
+                    <SheetTitle>Пользователи</SheetTitle>
+                    <SheetDescription>Выберите собеседника, чтобы открыть диалог.</SheetDescription>
+                  </SheetHeader>
+                  <Separator />
+                  <div className="min-h-0 flex-1">{renderUserList()}</div>
+                </SheetContent>
+              </Sheet>
+
+              {selectedUser ? (
+                <div className="flex items-center gap-2">
+                  <VideoCall selectedUser={selectedUser} />
+                  <AudioCall selectedUser={selectedUser} />
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div className="flex-1 p-6">
-            {selectedUser ? (
-              <div className="flex flex-col justify-between h-full">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Чат с {selectedUser.name}</h2>
-                </div>
-                <div className="h-full overflow-y-auto mb-4 p-4 border border-gray-200 rounded-lg">
+          <Separator />
+
+          {selectedUser ? (
+            <>
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="flex flex-col gap-4 p-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
                       className={getMessageClasses(message.userId)}
                     >
-                      <div className="mb-1 text-sm text-gray-500">
+                      <div className="mb-1 text-xs text-muted-foreground">
                         {message.userId === currentUser?.id ? 'Вы' : message.user.name}
-                        <span className="mx-2">•</span>
+                        <span className="mx-1">•</span>
                         {new Date(message.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </div>
-                      <div className={getMessageTextClasses(message.userId)}>{message.content}</div>
+                      <p>{message.content}</p>
                     </div>
                   ))}
+                  <div ref={lastMessageRef} />
                 </div>
-                <div className=" flex gap-4 lg:flex-row flex-col">
-                  <div className="w-full flex gap-4">
-                    <Input
-                      type="text"
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Введите сообщение..."
-                      className="flex-1"
-                      containerClassName="w-full"
-                    />
-                    <Button
-                      onClick={sendMessage}
-                      disabled={!messageInput.trim()}
-                      className="px-6"
-                    >
-                      <SendHorizonal className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <div className="flex gap-4">
-                    <VideoCall selectedUser={selectedUser} />
-                    <AudioCall selectedUser={selectedUser} />
-                  </div>
+              </ScrollArea>
+
+              <Separator />
+
+              <div className="p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Введите сообщение..."
+                    className="w-full"
+                    containerClassName="w-full"
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!messageInput.trim()}
+                    size="icon"
+                    aria-label="Отправить сообщение"
+                  >
+                    <SendHorizontal />
+                  </Button>
                 </div>
               </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <MessagesSquare className="w-20 h-20 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">Выберите пользователя для начала чата</h3>
-                <p className="text-gray-500 max-w-md">
-                  Выберите пользователя из списка слева, чтобы начать общение или продолжить существующий диалог.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <MessagesSquare className="text-muted-foreground" />
+              <h3 className="text-lg font-semibold">Выберите пользователя для начала чата</h3>
+              <p className="max-w-md text-sm text-muted-foreground">
+                Выберите пользователя из списка, чтобы начать общение или продолжить существующий диалог.
+              </p>
+              <Button
+                variant="outline"
+                className="md:hidden"
+                onClick={() => setIsUsersSheetOpen(true)}
+              >
+                Открыть список пользователей
+              </Button>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -8,20 +8,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
-import { Avatar, AvatarImage } from '@shared/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@shared/ui/avatar';
 
 export const UserMenu = () => {
   const user = useUserStore((state) => state.user);
   const { mutate } = useLogoutMutation();
-  const logout = async () => {
+
+  const logout = () => {
     mutate({});
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="h-8 w-8 cursor-pointer">
-          <AvatarImage src="https://github.com/shadcn.png" />
+        <Avatar className="size-8 cursor-pointer">
+          <AvatarImage
+            src="https://github.com/shadcn.png"
+            alt={user?.name ?? 'Пользователь'}
+          />
+          <AvatarFallback>{user?.name || 'U'}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent

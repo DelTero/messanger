@@ -1,5 +1,26 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { ErrorBoundaryContent } from './ErrorBoundaryContent';
+
+import { Button } from '@shared/ui/button';
+
+function ErrorBoundaryContent() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+      <div className="text-center max-w-md">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Что-то пошло не так</h2>
+        <p className="text-gray-600 mb-6">Произошла ошибка при загрузке страницы. Пожалуйста, попробуйте снова.</p>
+
+        <div className="flex items-center justify-center">
+          <Button
+            type="button"
+            onClick={() => window.location.reload()}
+          >
+            Обновить страницу
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface ErrorBoundaryProps {
   children?: ReactNode;
@@ -42,4 +63,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     return this.props.children;
   }
+}
+
+export function RouterErrorBoundary() {
+  return <ErrorBoundaryContent />;
 }

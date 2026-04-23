@@ -22,8 +22,8 @@ export const Header = () => {
 
     return cn(
       {
-        'bg-gray-900 text-white': isActive,
-        'text-gray-300 hover:bg-gray-700 hover:text-white': !isActive,
+        'bg-primary text-primary-foreground': isActive,
+        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground': !isActive,
       },
       'rounded-md px-3 py-2 text-sm font-medium',
     );
@@ -46,43 +46,39 @@ export const Header = () => {
 
     return cn(
       {
-        'bg-gray-900 text-white': isActive,
-        'text-gray-300 hover:bg-gray-700 hover:text-white': !isActive,
+        'bg-primary text-primary-foreground': isActive,
+        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground': !isActive,
       },
       'block rounded-md px-3 py-2 text-base font-medium',
     );
   };
 
   return (
-    <header className="sticky top-0 z-10 bg-gray-800 shadow">
+    <header className="sticky top-0 z-10 bg-sidebar shadow">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           <div className="flex items-center gap-8">
             <Link
               to={ROUTES.ROOT}
-              className="text-2xl font-bold text-indigo-600"
+              className="text-2xl font-bold text-primary"
             >
               <img
                 src={logo}
                 alt="Logo"
-                className="w-10 h-10"
+                className="size-10"
               />
             </Link>
 
             {/* Десктопная навигация */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden gap-8 md:flex">
               {navigation.map((item) => (
-                <div
+                <Link
                   key={item.name}
-                  className="flex items-center justify-center gap-x-6"
+                  to={item.to}
+                  className={getNavItemClasses(item.to)}
                 >
-                  <Link
-                    to={item.to}
-                    className={getNavItemClasses(item.to)}
-                  >
-                    {item.name}
-                  </Link>
-                </div>
+                  {item.name}
+                </Link>
               ))}
             </nav>
           </div>
@@ -92,7 +88,7 @@ export const Header = () => {
             <Notifications />
 
             <div className="flex items-center gap-2">
-              <span className="hidden text-white sm:inline">{user?.name}</span>
+              <span className="hidden text-sidebar-foreground sm:inline">{user?.name}</span>
               <UserMenu />
             </div>
 
@@ -105,7 +101,7 @@ export const Header = () => {
               aria-expanded={isMenuOpen}
               onClick={toggleMenu}
             >
-              {!isMenuOpen ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+              {!isMenuOpen ? <Menu data-icon="inline-start" /> : <X data-icon="inline-start" />}
               <span className="sr-only">Открыть главное меню</span>
             </Button>
           </div>
@@ -117,7 +113,7 @@ export const Header = () => {
         className={mobileMenuClasses}
         id="mobile-menu"
       >
-        <div className="space-y-1 px-2 pt-2 pb-3 sm:px-3">
+        <div className="flex flex-col gap-1 px-2 pt-2 pb-3 sm:px-3">
           {navigation.map((item) => (
             <Link
               key={item.name}

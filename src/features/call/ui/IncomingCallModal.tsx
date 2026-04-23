@@ -1,6 +1,17 @@
-import { Button } from '@shared/ui/Button';
+import { Button } from '@shared/ui/button';
 import { useCallStore } from '../model/callStore';
 import { useAuthenticatedSocket } from '@features/socket';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@shared/ui/alert-dialog';
+import { Phone, PhoneOff } from 'lucide-react';
 
 interface IncomingCallModalProps {
   callerName: string;
@@ -18,6 +29,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
     createPeerConnection,
     applyPendingCandidates,
     callMode,
+    setCallConnectionStatus,
   } = useCallStore();
 
   const acceptCall = async () => {
@@ -27,6 +39,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
       const stream = await initializeMedia(callMode);
       if (!stream) {
         console.error('Не удалось получить медиапоток');
+        setCallConnectionStatus('failed');
         resetCallState();
         return;
       }
@@ -49,6 +62,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
       setIncomingCall(false);
     } catch (error) {
       console.error('Ошибка при принятии звонка:', error);
+      setCallConnectionStatus('failed');
       resetCallState();
     }
   };
@@ -64,26 +78,37 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
   const title = callMode === 'audio' ? 'Входящий аудиозвонок' : 'Входящий видеозвонок';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-xl font-bold mb-4">
-          {title} от {callerName}
-        </h3>
-        <div className="flex justify-center space-x-4">
-          <Button
-            onClick={acceptCall}
-            className="bg-green-500 hover:bg-green-600"
-          >
-            Принять
-          </Button>
-          <Button
-            onClick={declineCall}
-            className="bg-red-500 hover:bg-red-600"
-          >
-            Отклонить
-          </Button>
-        </div>
-      </div>
-    </div>
+    <AlertDialog open>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {title} от {callerName}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {callMode === 'audio'
+              ? 'Пользователь приглашает вас в аудиоразговор.'
+              : 'Пользователь приглашает вас в видеозвонок.'}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={declineCall}>Отклонить</AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button onClick={acceptCall}>
+              <Phone data-icon="inline-start" />
+              Принять
+            </Button>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4"
+          aria-label="Отклонить звонок"
+          onClick={declineCall}
+        >
+          <PhoneOff />
+        </Button>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

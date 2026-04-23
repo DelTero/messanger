@@ -1,12 +1,13 @@
 import { useForm } from 'react-hook-form';
-import { Input } from '@shared/ui/Input';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@shared/ui/Button';
+import { Button } from '@shared/ui/button';
 import { Link, useNavigate } from 'react-router';
 import chatImg from '@assets/chat.png';
 import { SignupDTO, signupSchema } from '@features/auth';
 import { useSignupMutation } from '@features/auth/api/useSignupMutation';
 import { ROUTES } from '@shared/config/routes';
+import { Spinner } from '@/shared/ui/spinner';
+import { Input } from '@/shared/ui/input';
 
 export function Signup() {
   const {
@@ -72,9 +73,9 @@ export function Signup() {
 
           <Button
             type="submit"
-            fullWidth
-            isLoading={isSubmitting || isPending}
+            className="w-full"
           >
+            {(isSubmitting || isPending) && <Spinner data-icon="inline-start" />}
             Зарегистрироваться
           </Button>
         </form>
