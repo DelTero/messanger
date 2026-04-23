@@ -15,11 +15,9 @@ export const GlobalCallHandler = () => {
     callerName,
     callerId,
     incomingOffer,
-    peerConnection,
     setIncomingCall,
     addIceCandidate,
     resetCallState,
-    applyPendingCandidates,
   } = useCallStore();
 
   useEffect(() => {
@@ -46,10 +44,12 @@ export const GlobalCallHandler = () => {
 
     const handleCallAccepted = async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
       console.log('Звонок принят, получен ответ');
-      if (peerConnection) {
+      const { peerConnection: currentPeerConnection, applyPendingCandidates: applyCurrentPendingCandidates } =
+        useCallStore.getState();
+      if (currentPeerConnection) {
         try {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-          await applyPendingCandidates();
+          await currentPeerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+          await applyCurrentPendingCandidates();
         } catch (error) {
           console.error('Ошибка при установке удаленного описания:', error);
         }
@@ -81,7 +81,7 @@ export const GlobalCallHandler = () => {
       socket.off('call-declined', handleCallDeclined);
       socket.off('call-ended', handleCallEnded);
     };
-  }, [socket, user, peerConnection]);
+  }, [socket, user, setIncomingCall, addIceCandidate, resetCallState]);
 
   return (
     <>

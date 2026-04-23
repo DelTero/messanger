@@ -35,7 +35,7 @@ export const VideoCall = ({ selectedUser }: VideoCallProps) => {
         return;
       }
 
-      const pc = createPeerConnection(selectedUser.id, socket);
+      const pc = createPeerConnection(selectedUser.id, socket, stream);
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);

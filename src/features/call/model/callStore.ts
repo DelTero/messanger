@@ -35,7 +35,11 @@ export interface CallState {
 
   fetchIceServers: () => Promise<void>;
   initializeMedia: (mode?: 'video' | 'audio') => Promise<MediaStream | null>;
-  createPeerConnection: (targetUserId: string | number, socket: Socket) => RTCPeerConnection;
+  createPeerConnection: (
+    targetUserId: string | number,
+    socket: Socket,
+    stream?: MediaStream | null,
+  ) => RTCPeerConnection;
   applyPendingCandidates: () => Promise<void>;
   addIceCandidate: (candidate: RTCIceCandidateInit) => void;
   cleanupResources: () => void;
@@ -122,7 +126,7 @@ export const useCallStore = create<CallState>((set, get) => ({
     }
   },
 
-  createPeerConnection: (targetUserId, socket) => {
+  createPeerConnection: (targetUserId, socket, stream) => {
     const currentPeerConnection = get().peerConnection;
     if (currentPeerConnection) {
       currentPeerConnection.close();
@@ -133,7 +137,7 @@ export const useCallStore = create<CallState>((set, get) => ({
     });
     set({ callConnectionStatus: 'connecting' });
 
-    const { localStream } = get();
+    const localStream = stream ?? get().localStream;
     if (localStream) {
       localStream.getTracks().forEach((track) => {
         pc.addTrack(track, localStream);

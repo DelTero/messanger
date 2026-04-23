@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { PhoneOff } from 'lucide-react';
 import { useAuthenticatedSocket } from '@features/socket';
 import { Avatar, AvatarFallback } from '@shared/ui/avatar';
@@ -11,6 +11,7 @@ export const ActiveCallModal = () => {
   const {
     isCallActive,
     selectedUser,
+    callerName,
     callerId,
     resetCallState,
     localStream,
@@ -19,26 +20,36 @@ export const ActiveCallModal = () => {
     callConnectionStatus,
   } = useCallStore();
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
+  const localVideoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
+    localVideoRef.current = node;
+    if (node) {
+      const ls = useCallStore.getState().localStream;
+      if (ls) node.srcObject = ls;
+    }
+  }, []);
+
   useEffect(() => {
-    if (callMode === 'video') {
-      if (localVideoRef.current && localStream) {
-        localVideoRef.current.srcObject = localStream;
-      }
+    if (callMode !== 'video') return;
+    const el = localVideoRef.current;
+    if (el && localStream) {
+      el.srcObject = localStream;
     }
   }, [localStream, callMode]);
 
   useEffect(() => {
     if (callMode === 'video') {
-      if (remoteVideoRef.current && remoteStream) {
-        remoteVideoRef.current.srcObject = remoteStream;
+      const el = remoteVideoRef.current;
+      if (el && remoteStream) {
+        el.srcObject = remoteStream;
       }
     } else {
-      if (remoteAudioRef.current && remoteStream) {
-        remoteAudioRef.current.srcObject = remoteStream;
+      const el = remoteAudioRef.current;
+      if (el && remoteStream) {
+        el.srcObject = remoteStream;
       }
     }
   }, [remoteStream, callMode]);
@@ -55,7 +66,7 @@ export const ActiveCallModal = () => {
     resetCallState();
   };
 
-  const callName = selectedUser?.name || 'пользователем';
+  const callName = selectedUser?.name || callerName || 'пользователем';
   const isConnecting = callConnectionStatus === 'connecting';
   const isConnected = callConnectionStatus === 'connected';
   const isFailed = callConnectionStatus === 'failed';
@@ -111,7 +122,7 @@ export const ActiveCallModal = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="relative overflow-hidden rounded-md bg-muted">
               <video
-                ref={localVideoRef}
+                ref={localVideoCallbackRef}
                 autoPlay
                 muted
                 playsInline
@@ -130,7 +141,7 @@ export const ActiveCallModal = () => {
                 className="h-56 w-full object-cover md:h-64"
               />
               <span className="absolute bottom-2 left-2 rounded bg-background/90 px-2 py-1 text-xs font-medium">
-                {selectedUser?.name || 'Собеседник'}
+                {callName}
               </span>
             </div>
           </div>

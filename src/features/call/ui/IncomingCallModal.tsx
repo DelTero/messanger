@@ -24,6 +24,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
   const {
     setCallActive,
     setIncomingCall,
+    setSelectedUser,
     resetCallState,
     initializeMedia,
     createPeerConnection,
@@ -44,7 +45,7 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
         return;
       }
 
-      const pc = createPeerConnection(callerId, socket);
+      const pc = createPeerConnection(callerId, socket, stream);
 
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer));
 
@@ -58,6 +59,8 @@ export const IncomingCallModal = ({ callerName, callerId, incomingOffer }: Incom
         to: callerId,
       });
 
+      const callerUser = { id: callerId, name: callerName, email: '' };
+      setSelectedUser(callerUser);
       setCallActive(true);
       setIncomingCall(false);
     } catch (error) {
